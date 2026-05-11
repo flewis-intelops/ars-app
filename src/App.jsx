@@ -380,6 +380,24 @@ const COPY = {
     sumWho: "WHO", sumWhere: "WHERE", sumWhen: "WHEN", sumActivity: "ACTIVITY", sumMedia: "MEDIA",
     sumPhoto: "Photo", sumVoice: "Voice",
     submittedTitle: "REPORT SUBMITTED", submittedSub: "Queued for sync · pending validation",
+
+    // Login (POC demo auth)
+    authBreadcrumb: "AUTH",
+    authTitle: "ARS",
+    authSub: "Unit Agent Reporting",
+    authCallsignLabel: "CALLSIGN",
+    authCallsignPlaceholder: "e.g., S-7421",
+    authPasscodeLabel: "PASSCODE",
+    authPasscodePlaceholder: "Enter your passcode",
+    authLoginButton: "LOG IN",
+    authLoginBlocked: "Enter callsign and passcode",
+    authDividerOr: "OR",
+    authBiometricLabel: "FACE ID",
+    authBiometricHint: "Tap to unlock with biometric",
+    authBiometricUnlocking: "AUTHENTICATING...",
+    authDemoBanner: "POC demo auth · production uses device pairing + Secure Enclave per ICP §8",
+    authLogoutButton: "LOG OUT",
+    authLogoutSub: "Returns to callsign / passcode screen",
   },
   es: {
     classification: "DEMO // HUMINT SIMULADO // NO ES INTELIGENCIA REAL",
@@ -549,6 +567,24 @@ const COPY = {
     sumWho: "QUIÉN", sumWhere: "DÓNDE", sumWhen: "CUÁNDO", sumActivity: "ACTIVIDAD", sumMedia: "MEDIOS",
     sumPhoto: "Foto", sumVoice: "Voz",
     submittedTitle: "REPORTE ENVIADO", submittedSub: "En cola · pendiente validación",
+
+    // Login (POC demo auth)
+    authBreadcrumb: "AUTH",
+    authTitle: "ARS",
+    authSub: "Reporte de Agente",
+    authCallsignLabel: "INDICATIVO",
+    authCallsignPlaceholder: "p.ej., S-7421",
+    authPasscodeLabel: "CÓDIGO",
+    authPasscodePlaceholder: "Ingrese su código",
+    authLoginButton: "INGRESAR",
+    authLoginBlocked: "Ingrese indicativo y código",
+    authDividerOr: "O",
+    authBiometricLabel: "FACE ID",
+    authBiometricHint: "Toque para desbloquear con biométrico",
+    authBiometricUnlocking: "AUTENTICANDO...",
+    authDemoBanner: "Auth de POC · producción usa Secure Enclave por ICP §8",
+    authLogoutButton: "CERRAR SESIÓN",
+    authLogoutSub: "Regresa a pantalla de indicativo",
   },
 };
 
@@ -1445,8 +1481,13 @@ function SummaryRow({ label, value, t }) {
 // =============================================================================
 export default function ArsPocIntegrated() {
   const [lang, setLang] = useState("en");
-  const [route, setRoute] = useState({ screen: "home", history: [], params: {} });
+  const [route, setRoute] = useState({ screen: "auth", history: [], params: {} });
   const [syncQueue, setSyncQueue] = useState(2);
+
+  // Auth state (POC demo only — production uses device pairing + Secure Enclave)
+  const [authCallsign, setAuthCallsign] = useState("");
+  const [authPasscode, setAuthPasscode] = useState("");
+  const [authBiometricUnlocking, setAuthBiometricUnlocking] = useState(false);
 
   // Lifted state for screens (will be used in Turns 2-3)
   const [tab, setTab] = useState("active");
@@ -1557,6 +1598,25 @@ export default function ArsPocIntegrated() {
     setRoute({ screen: last, history: route.history.slice(0, -1), params: {} });
   };
 
+  // Auth handlers (POC demo — accepts any non-empty callsign + passcode)
+  const authCanLogin = authCallsign.trim().length > 0 && authPasscode.length > 0;
+  const handleLogin = () => {
+    if (!authCanLogin) return;
+    setRoute({ screen: "home", history: [], params: {} });
+  };
+  const handleBiometricLogin = () => {
+    setAuthBiometricUnlocking(true);
+    setTimeout(() => {
+      setAuthBiometricUnlocking(false);
+      setRoute({ screen: "home", history: [], params: {} });
+    }, 1200);
+  };
+  const handleLogout = () => {
+    setAuthCallsign("");
+    setAuthPasscode("");
+    setRoute({ screen: "auth", history: [], params: {} });
+  };
+
   // Quick Capture handlers
   const tapPhoto = () => {
     setPhotoFlash(true);
@@ -1656,6 +1716,7 @@ export default function ArsPocIntegrated() {
   const waypoints = [{ x: 80, y: 130 }, { x: 175, y: 95 }, { x: 270, y: 130 }];
 
   const breadcrumbMap = {
+    auth: t.authBreadcrumb,
     home: t.homeBreadcrumb, modeChooser: t.modeBreadcrumb,
     myInstructions: t.instructionsBreadcrumb, taskDetail: t.taskBreadcrumb,
     qcPicker: t.qcBreadcrumb, qcVideoRec: t.qcBreadcrumb, qcAudioRec: t.qcBreadcrumb, qcReview: t.qcBreadcrumb,
@@ -1713,12 +1774,12 @@ export default function ArsPocIntegrated() {
           )}
 
           {/* Top nav */}
-          {route.screen === "home" ? (
+          {route.screen === "home" || route.screen === "auth" ? (
             <div className="px-4 mt-3 flex items-center justify-between">
               <div style={{ width: 78 }} />
               <div className="text-right">
                 <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9, color: AMBER_DIM, letterSpacing: "0.12em" }}>{breadcrumb}</div>
-                <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9, color: AMBER, letterSpacing: "0.12em", marginTop: 2 }}>{t.homeGreeting}</div>
+                <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9, color: AMBER, letterSpacing: "0.12em", marginTop: 2 }}>{route.screen === "auth" ? "—" : t.homeGreeting}</div>
               </div>
             </div>
           ) : (
@@ -1731,6 +1792,90 @@ export default function ArsPocIntegrated() {
               <div className="text-right">
                 <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9, color: AMBER_DIM, letterSpacing: "0.12em" }}>{breadcrumb}</div>
                 <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9, color: AMBER, letterSpacing: "0.12em", marginTop: 2 }}>{t.sourceLabel} · {SOURCE_PSEUDONYM}</div>
+              </div>
+            </div>
+          )}
+
+          {/* === AUTH (POC demo login) === */}
+          {route.screen === "auth" && (
+            <div className="px-4 mt-3 pb-12 flex flex-col" style={{ minHeight: 600 }}>
+              {/* Branding */}
+              <div className="text-center mt-6 mb-1">
+                <div style={{ fontFamily: "'Rajdhani', sans-serif", fontWeight: 700, fontSize: 42, letterSpacing: "0.22em", color: AMBER, lineHeight: 1 }}>{t.authTitle}</div>
+                <div style={{ fontFamily: "'IBM Plex Sans', sans-serif", fontSize: 11, color: "rgba(245,245,244,0.5)", letterSpacing: "0.1em", marginTop: 6 }}>{t.authSub}</div>
+              </div>
+
+              <div className="mt-8 flex-1">
+                {/* Callsign field */}
+                <div className="mb-3">
+                  <div className="mb-1.5">
+                    <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9, color: AMBER, letterSpacing: "0.14em" }}>── {t.authCallsignLabel}</span>
+                  </div>
+                  <input value={authCallsign} onChange={(e) => setAuthCallsign(e.target.value)}
+                    placeholder={t.authCallsignPlaceholder} autoCapitalize="characters"
+                    className="w-full px-3 py-2.5 outline-none"
+                    style={{ background: "rgba(255,255,255,0.02)", border: `1px solid ${HAIRLINE_STRONG}`,
+                      fontFamily: "'JetBrains Mono', monospace", fontSize: 13, color: "#F5F5F4", letterSpacing: "0.08em" }} />
+                </div>
+
+                {/* Passcode field */}
+                <div className="mb-4">
+                  <div className="mb-1.5">
+                    <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9, color: AMBER, letterSpacing: "0.14em" }}>── {t.authPasscodeLabel}</span>
+                  </div>
+                  <input type="password" value={authPasscode} onChange={(e) => setAuthPasscode(e.target.value)}
+                    placeholder={t.authPasscodePlaceholder}
+                    className="w-full px-3 py-2.5 outline-none"
+                    style={{ background: "rgba(255,255,255,0.02)", border: `1px solid ${HAIRLINE_STRONG}`,
+                      fontFamily: "'JetBrains Mono', monospace", fontSize: 13, color: "#F5F5F4", letterSpacing: "0.16em" }} />
+                </div>
+
+                {/* Login button */}
+                <button onClick={handleLogin} disabled={!authCanLogin}
+                  className="w-full py-3 transition-all"
+                  style={{ background: authCanLogin ? AMBER : "transparent",
+                    color: authCanLogin ? BG : AMBER_DIM,
+                    border: `1px solid ${authCanLogin ? AMBER : HAIRLINE}`,
+                    fontFamily: "'Rajdhani', sans-serif", fontWeight: 700, fontSize: 14, letterSpacing: "0.16em",
+                    cursor: authCanLogin ? "pointer" : "not-allowed" }}>
+                  {t.authLoginButton}
+                </button>
+                {!authCanLogin && (
+                  <div className="text-center mt-1.5" style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 8.5, color: AMBER_DIM, letterSpacing: "0.08em" }}>
+                    {t.authLoginBlocked}
+                  </div>
+                )}
+
+                {/* Divider */}
+                <div className="flex items-center gap-3 my-5">
+                  <div className="flex-1" style={{ height: 1, background: HAIRLINE }} />
+                  <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9, color: AMBER_DIM, letterSpacing: "0.18em" }}>{t.authDividerOr}</span>
+                  <div className="flex-1" style={{ height: 1, background: HAIRLINE }} />
+                </div>
+
+                {/* Biometric button */}
+                <button onClick={handleBiometricLogin} disabled={authBiometricUnlocking}
+                  className="w-full flex flex-col items-center justify-center py-4 transition-all"
+                  style={{ background: "rgba(255,255,255,0.015)", border: `1px solid ${HAIRLINE_STRONG}`,
+                    cursor: authBiometricUnlocking ? "wait" : "pointer" }}>
+                  <div className="flex items-center justify-center mb-1.5"
+                    style={{ width: 44, height: 44, borderRadius: 22, border: `1px solid ${authBiometricUnlocking ? GREEN : AMBER}`, color: authBiometricUnlocking ? GREEN : AMBER }}>
+                    <User size={22} strokeWidth={1.5} />
+                  </div>
+                  <div style={{ fontFamily: "'Rajdhani', sans-serif", fontWeight: 600, fontSize: 12, color: authBiometricUnlocking ? GREEN : "#F5F5F4", letterSpacing: "0.14em" }}>
+                    {authBiometricUnlocking ? t.authBiometricUnlocking : t.authBiometricLabel}
+                  </div>
+                  <div style={{ fontFamily: "'IBM Plex Sans', sans-serif", fontSize: 10, color: "rgba(245,245,244,0.5)", marginTop: 2 }}>
+                    {t.authBiometricHint}
+                  </div>
+                </button>
+              </div>
+
+              {/* Demo banner pinned to bottom of form area */}
+              <div className="px-2.5 py-2 mt-6 mb-4 text-center"
+                style={{ border: `1px dashed ${HAIRLINE}`, background: "rgba(245,158,11,0.03)",
+                  fontFamily: "'JetBrains Mono', monospace", fontSize: 9, color: ORANGE, letterSpacing: "0.08em", lineHeight: 1.5 }}>
+                {t.authDemoBanner}
               </div>
             </div>
           )}
@@ -1921,6 +2066,8 @@ export default function ArsPocIntegrated() {
                   onTap={() => setToast(t.toastDuress)} />
                 <ActionRow icon={Radio} label={t.secureContact} sub={t.secureContactSub}
                   onTap={() => setToast(t.toastFutureScreen)} />
+                <ActionRow icon={Lock} label={t.authLogoutButton} sub={t.authLogoutSub}
+                  onTap={handleLogout} />
               </div>
               <div className="mt-4 px-2.5 py-2 text-center"
                 style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9, color: AMBER_DIM, letterSpacing: "0.12em",

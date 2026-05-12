@@ -1501,6 +1501,13 @@ export default function ArsPocIntegrated() {
   const [authPasscode, setAuthPasscode] = useState("");
   const [authBiometricUnlocking, setAuthBiometricUnlocking] = useState(false);
 
+  // Session (set on successful demo login)
+  const [session, setSession] = useState(null); // { source_id, pseudonym, handler_callsign, aor }
+
+  // Live data from Supabase
+  const [liveTaskings, setLiveTaskings] = useState([]);
+  const [liveReports, setLiveReports] = useState([]);
+
   // Lifted state for screens (will be used in Turns 2-3)
   const [tab, setTab] = useState("active");
   const [selectedTask, setSelectedTask] = useState(null);

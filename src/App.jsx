@@ -1784,6 +1784,10 @@ export default function ArsPocIntegrated() {
     if (wzStep > 1) setWzStep((s) => s - 1);
     else goBack();
   };
+  // Ensure basis_of_knowledge always has the default value when entering Step 4
+  useEffect(() => {
+    if (wzStep === 4 && !wzBasis) setWzBasis("direct");
+  }, [wzStep, wzBasis]);
   const wzTapPhoto = () => {
     setWzPhotoFlash(true);
     setTimeout(() => setWzPhotoFlash(false), 220);

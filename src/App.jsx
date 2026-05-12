@@ -1796,6 +1796,10 @@ export default function ArsPocIntegrated() {
   const wzCanSubmit = !!wzConfidence;
   const wzSubmit = async () => {
     if (!wzCanSubmit) return;
+    if (!wzBasis || !wzConfidence) {
+      setToast("Please choose how you know this and your confidence level.");
+      return;
+    }
     const sexMap = { m: "male", f: "female", u: "unsure" };
     const ageMap = { teens: "teens", "20s": "20s", "30s": "30s", "40s": "40s", "50s": "50s", "60p": "60+", u: "unsure" };
     const buildMap = { slim: "slim", avg: "average", heavy: "heavy", u: "unsure" };

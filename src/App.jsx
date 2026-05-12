@@ -1707,7 +1707,7 @@ export default function ArsPocIntegrated() {
       id: r.report_id_display || r.id,
       title: `${String(r.category || "").toUpperCase()}${sub}`,
       submittedAt: r.submitted_at ? relTime(r.submitted_at) : "—",
-      status: r.status || "pending_validation",
+      status: r.validation_status || "pending_validation",
     };
   };
 
@@ -1719,15 +1719,13 @@ export default function ArsPocIntegrated() {
     if (!session?.source_id) return;
     const [{ data: tk }, { data: rp }] = await Promise.all([
       supabase.from("taskings").select("*").eq("source_id", session.source_id).eq("status", "active").order("created_at", { ascending: false }),
-      supabase.from("reports").select("*").eq("source_id", session.source_id).order("submitted_at", { ascending: false }),
+      supabase.from("reports").select("id, report_id_display, category, sub_category, validation_status, submitted_at, source_id, handler_id").eq("source_id", session.source_id).order("submitted_at", { ascending: false }),
     ]);
     setLiveTaskings((tk || []).map(mapTasking));
-    setLiveReports((rp || []).map((r) => ({ ...mapReport(r), status: dbStatusToUi(r.status) })));
+    setLiveReports((rp || []).map((r) => ({ ...mapReport(r), status: dbStatusToUi(r.validation_status) })));
     try {
-      const ts = new Date().toTimeString().slice(0, 8);
-      const statuses = (rp || []).map((r) => r.status);
       // eslint-disable-next-line no-console
-      console.log(`[reports query] ${ts} — fetched ${(rp || []).length} report(s), statuses:`, statuses);
+      console.log("[reports query]", new Date().toLocaleTimeString(), "fetched", rp?.length || 0, "report(s), full first row:", rp?.[0]);
     } catch {}
   };
 

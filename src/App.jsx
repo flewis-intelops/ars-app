@@ -1784,6 +1784,10 @@ export default function ArsPocIntegrated() {
     if (wzStep > 1) setWzStep((s) => s - 1);
     else goBack();
   };
+  // Ensure basis_of_knowledge always has the default value when entering Step 4
+  useEffect(() => {
+    if (wzStep === 4 && !wzBasis) setWzBasis("direct");
+  }, [wzStep, wzBasis]);
   const wzTapPhoto = () => {
     setWzPhotoFlash(true);
     setTimeout(() => setWzPhotoFlash(false), 220);
@@ -1796,6 +1800,10 @@ export default function ArsPocIntegrated() {
   const wzCanSubmit = !!wzConfidence;
   const wzSubmit = async () => {
     if (!wzCanSubmit) return;
+    if (!wzBasis || !wzConfidence) {
+      setToast("Please choose how you know this and your confidence level.");
+      return;
+    }
     const sexMap = { m: "male", f: "female", u: "unsure" };
     const ageMap = { teens: "teens", "20s": "20s", "30s": "30s", "40s": "40s", "50s": "50s", "60p": "60+", u: "unsure" };
     const buildMap = { slim: "slim", avg: "average", heavy: "heavy", u: "unsure" };
@@ -2801,7 +2809,29 @@ export default function ArsPocIntegrated() {
                           <SummaryRow label={t.sumMedia} value={sumMediaVal} t={t} />
                         </div>
                       </div>
-                      <ChipRow label={t.basisLabel} options={BASIS_OPTIONS} value={wzBasis} onChange={setWzBasis} lang={lang} sub={t.basisHint} />
+                      <div className="mb-3.5">
+                        <div className="mb-1.5 flex items-center justify-between">
+                          <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9, color: AMBER, letterSpacing: "0.14em" }}>── {t.basisLabel}</span>
+                          <span style={{ fontFamily: "'IBM Plex Sans', sans-serif", fontSize: 10, color: AMBER_DIM }}>{t.basisHint}</span>
+                        </div>
+                        <div className="grid grid-cols-3 gap-1.5">
+                          {BASIS_OPTIONS.map((opt) => {
+                            const Icon = opt.icon;
+                            const active = wzBasis === opt.key;
+                            return (
+                              <button key={opt.key} onClick={() => setWzBasis(opt.key)}
+                                className="py-2 px-2 transition-all flex flex-col items-center justify-center gap-1"
+                                style={{ background: active ? AMBER : "transparent", color: active ? BG : AMBER,
+                                  border: `1px solid ${active ? AMBER : HAIRLINE_STRONG}`,
+                                  fontFamily: "'Rajdhani', sans-serif", fontSize: 10.5, fontWeight: 600, letterSpacing: "0.06em",
+                                  lineHeight: 1.15, textAlign: "center", minHeight: 52 }}>
+                                {Icon && <Icon size={12} strokeWidth={1.8} />}
+                                <div>{opt[lang]}</div>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
                       <div className="mb-3">
                         <div className="mb-1.5 flex items-center justify-between">
                           <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9, color: AMBER, letterSpacing: "0.14em" }}>── {t.confidenceLabel}</span>

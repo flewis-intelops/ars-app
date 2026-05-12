@@ -1618,22 +1618,115 @@ export default function ArsPocIntegrated() {
   };
 
   // Auth handlers (POC demo — accepts any non-empty callsign + passcode)
-  const authCanLogin = authCallsign.trim().length > 0 && authPasscode.length > 0;
-  const handleLogin = () => {
-    if (!authCanLogin) return;
+  const authCanLogin = authCallsign.trim().length > 0;
+  const doDemoLogin = async () => {
+    const pseudo = authCallsign.trim().toUpperCase();
+    if (!pseudo) return;
+    const { data, error } = await supabase.rpc("mobile_demo_login", { p_pseudonym: pseudo });
+    const row = Array.isArray(data) ? data[0] : data;
+    if (error || !row) {
+      setToast("Unknown callsign — try S-7421, S-3892, S-1156, or S-4407");
+      return;
+    }
+    setSession({
+      source_id: row.source_id,
+      pseudonym: row.pseudonym,
+      handler_callsign: row.handler_callsign,
+      aor: row.aor,
+    });
     setRoute({ screen: "home", history: [], params: {} });
   };
+  const handleLogin = () => { if (authCanLogin) doDemoLogin(); };
   const handleBiometricLogin = () => {
+    if (!authCallsign.trim()) {
+      setToast("Enter a callsign first");
+      return;
+    }
     setAuthBiometricUnlocking(true);
-    setTimeout(() => {
+    setTimeout(async () => {
       setAuthBiometricUnlocking(false);
-      setRoute({ screen: "home", history: [], params: {} });
-    }, 1200);
+      await doDemoLogin();
+    }, 800);
   };
   const handleLogout = () => {
     setAuthCallsign("");
     setAuthPasscode("");
+    setSession(null);
+    setLiveTaskings([]);
+    setLiveReports([]);
     setRoute({ screen: "auth", history: [], params: {} });
+  };
+
+  // Display values (fall back to constants for the auth screen / pre-login)
+  const sessionPseudonym = session?.pseudonym || SOURCE_PSEUDONYM;
+  const sessionHandler = session?.handler_callsign || HANDLER_CALLSIGN;
+
+  // Map DB rows → existing TaskRow shape
+  const mapTasking = (r) => {
+    const priorityMap = { time_sensitive: "time-sensitive", priority: "priority", routine: "routine" };
+    let deadlineMinutes = null;
+    if (r.due_at) {
+      const diffMs = new Date(r.due_at).getTime() - Date.now();
+      deadlineMinutes = Math.max(0, Math.round(diffMs / 60000));
+    }
+    return {
+      _dbId: r.id,
+      id: r.task_id_display || r.id,
+      title: r.title,
+      priority: priorityMap[r.priority] || "routine",
+      pir: r.pir || "—",
+      deadlineMinutes,
+      fresh: !!r.is_new,
+      // task-detail extras (best-effort fallbacks so the existing screen still renders)
+      target: r.target || r.title,
+      guidance: Array.isArray(r.guidance) ? r.guidance : (r.guidance ? [r.guidance] : []),
+      constraint: r.constraint || "Observation only",
+      legalReview: r.legal_review || "—",
+      issuedAt: r.created_at ? relTime(r.created_at) : "—",
+      category: r.category || "person",
+      subCategory: r.sub_category || "",
+    };
+  };
+
+  const mapReport = (r) => {
+    const sub = r.sub_category ? ` · ${String(r.sub_category).replace(/_/g, " ").toUpperCase()}` : "";
+    return {
+      _dbId: r.id,
+      id: r.report_id_display || r.id,
+      title: `${String(r.category || "").toUpperCase()}${sub}`,
+      submittedAt: r.submitted_at ? relTime(r.submitted_at) : "—",
+      status: r.status || "pending_validation",
+    };
+  };
+
+  // CompletedRow expects "validated" | "pending" | "rejected" | "on_hold"
+  const dbStatusToUi = (s) => (s === "pending_validation" ? "pending" : s);
+
+  // Fetcher
+  const fetchLive = async () => {
+    if (!session?.source_id) return;
+    const [{ data: tk }, { data: rp }] = await Promise.all([
+      supabase.from("taskings").select("*").eq("source_id", session.source_id).eq("status", "active").order("created_at", { ascending: false }),
+      supabase.from("reports").select("*").eq("source_id", session.source_id).order("submitted_at", { ascending: false }),
+    ]);
+    setLiveTaskings((tk || []).map(mapTasking));
+    setLiveReports((rp || []).map((r) => ({ ...mapReport(r), status: dbStatusToUi(r.status) })));
+  };
+
+  // Initial + 5s polling while logged in
+  useEffect(() => {
+    if (!session) return;
+    fetchLive();
+    const i = setInterval(fetchLive, 5000);
+    return () => clearInterval(i);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [session?.source_id]);
+
+  // Mark a tasking as no-longer-new when its detail is opened
+  const markTaskingSeen = async (dbId) => {
+    if (!dbId) return;
+    setLiveTaskings((arr) => arr.map((x) => (x._dbId === dbId ? { ...x, fresh: false } : x)));
+    await supabase.from("taskings").update({ is_new: false }).eq("id", dbId);
   };
 
   // Quick Capture handlers

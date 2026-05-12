@@ -1756,6 +1756,7 @@ export default function ArsPocIntegrated() {
   // Structured handlers
   const handleCardTap = (cat, locked) => {
     if (locked) setGatedOpen(true);
+    else if (cat.key !== "person") setToast("Category coming in v0.3 — try Person for the demo");
     else setActiveSubCat(cat);
   };
   const handlePickSub = (catKey, subKey) => {

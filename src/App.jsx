@@ -1794,9 +1794,38 @@ export default function ArsPocIntegrated() {
     setTimeout(() => { setWzVoiceRecording(false); setWzVoiceAttached("0:18"); }, 1800);
   };
   const wzCanSubmit = !!wzConfidence;
-  const wzSubmit = () => {
+  const wzSubmit = async () => {
     if (!wzCanSubmit) return;
-    setSyncQueue((q) => q + 1);
+    const sexMap = { m: "male", f: "female", u: "unsure" };
+    const ageMap = { teens: "teens", "20s": "20s", "30s": "30s", "40s": "40s", "50s": "50s", "60p": "60+", u: "unsure" };
+    const buildMap = { slim: "slim", avg: "average", heavy: "heavy", u: "unsure" };
+    const timeMap = { now: "just_now", hour: "within_hour", today: "earlier_today", yest: "yesterday", week: "earlier_this_week", custom: "other" };
+    const basisMap = { direct: "saw_self", hearsay: "someone_told_me", doc: "read_written" };
+    const { data, error } = await supabase.rpc("submit_report", {
+      p_source_pseudonym: sessionPseudonym,
+      p_category: "person",
+      p_sub_category: "new_person_seen",
+      p_person_sex: sexMap[wzSex] || null,
+      p_person_age: ageMap[wzAge] || null,
+      p_person_build: buildMap[wzBuild] || null,
+      p_person_features: wzFeatures || null,
+      p_mgrs: "14R PU 64829 53117",
+      p_named_place: wzNamedPlace || null,
+      p_when_observed: timeMap[wzTime] || null,
+      p_activity: wzActivity || null,
+      p_has_photo: !!wzPhotoAttached,
+      p_has_voice: !!wzVoiceAttached,
+      p_basis_of_knowledge: basisMap[wzBasis] || null,
+      p_confidence: wzConfidence,
+    });
+    if (error) {
+      setToast("Submit failed. Saved to drafts.");
+      return;
+    }
+    const row = Array.isArray(data) ? data[0] : data;
+    const rid = row?.report_id_display || "RPT";
+    setToast(`Report submitted · ${rid}`);
+    fetchLive();
     setSubmitOk(true);
   };
 

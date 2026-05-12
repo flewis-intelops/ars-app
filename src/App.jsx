@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { supabase } from "@/lib/supabase";
 import {
   ChevronLeft, ChevronRight, ClipboardList, Send, FolderClock, ShieldAlert,
   Languages, WifiOff, Lock, Camera, Video, PenLine, Plane, Mic, X,
@@ -27,6 +28,18 @@ const HAIRLINE_STRONG = "rgba(201, 169, 97, 0.45)";
 
 const HANDLER_CALLSIGN = "WALKER-3";
 const SOURCE_PSEUDONYM = "S-7421";
+
+function relTime(iso) {
+  const ms = Date.now() - new Date(iso).getTime();
+  const s = Math.max(0, Math.floor(ms / 1000));
+  if (s < 60) return `${s}s ago`;
+  const m = Math.floor(s / 60);
+  if (m < 60) return `${m}m ago`;
+  const h = Math.floor(m / 60);
+  if (h < 24) return `${h}h ago`;
+  const d = Math.floor(h / 24);
+  return `${d}d ago`;
+}
 
 // =============================================================================
 // SYNTHETIC DATA
@@ -615,6 +628,15 @@ function Toast({ text }) {
 }
 
 function SyncBanner({ queueCount, t }) {
+  const [online, setOnline] = useState(typeof navigator !== "undefined" ? navigator.onLine : true);
+  useEffect(() => {
+    const on = () => setOnline(true);
+    const off = () => setOnline(false);
+    window.addEventListener("online", on);
+    window.addEventListener("offline", off);
+    return () => { window.removeEventListener("online", on); window.removeEventListener("offline", off); };
+  }, []);
+  if (online) return null;
   return (
     <div className="flex items-center gap-2 px-2.5 py-1.5"
       style={{ border: `1px solid rgba(245,158,11,0.3)`, background: "rgba(245,158,11,0.05)" }}>
@@ -915,7 +937,8 @@ function formatDeadline(mins, t) {
 
 function TaskRow({ task, lang, onTap }) {
   const t = COPY[lang];
-  const dl = formatDeadline(task.deadlineMinutes, t);
+  const hasDeadline = task.deadlineMinutes != null;
+  const dl = hasDeadline ? formatDeadline(task.deadlineMinutes, t) : { text: "NO DEADLINE", color: AMBER_DIM, bold: false };
   return (
     <button onClick={onTap} className="relative w-full text-left transition-all active:scale-[0.99]"
       style={{ background: "rgba(255,255,255,0.015)", border: `1px solid ${HAIRLINE_STRONG}`, padding: "10px 12px" }}>
@@ -927,7 +950,7 @@ function TaskRow({ task, lang, onTap }) {
             style={{ background: AMBER, color: BG, fontFamily: "'JetBrains Mono', monospace", fontSize: 8, letterSpacing: "0.08em", fontWeight: 600 }}>{t.newPill}</span>}
         </div>
         <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, color: dl.color, letterSpacing: "0.08em", fontWeight: dl.bold ? 700 : 400 }}>
-          {t.dueLabel} {dl.text}
+          {hasDeadline ? `${t.dueLabel} ${dl.text}` : dl.text}
         </span>
       </div>
       <div style={{ fontFamily: "'Rajdhani', sans-serif", fontWeight: 600, fontSize: 13, color: "#F5F5F4", letterSpacing: "0.04em", lineHeight: 1.25, marginBottom: 3 }}>{task.title}</div>
@@ -970,8 +993,9 @@ function CompletedRow({ task, lang }) {
     validated: { label: t.statusValidated, color: GREEN, icon: CheckCircle2 },
     pending: { label: t.statusPending, color: ORANGE, icon: Clock },
     rejected: { label: t.statusRejected, color: RED, icon: AlertCircle },
+    on_hold: { label: "ON HOLD", color: AMBER_DIM, icon: Clock },
   };
-  const s = map[task.status];
+  const s = map[task.status] || map.pending;
   const StatusIcon = s.icon;
   return (
     <div className="w-full p-2.5" style={{ background: "rgba(255,255,255,0.012)", border: `1px solid ${HAIRLINE}` }}>
@@ -1489,6 +1513,13 @@ export default function ArsPocIntegrated() {
   const [authPasscode, setAuthPasscode] = useState("");
   const [authBiometricUnlocking, setAuthBiometricUnlocking] = useState(false);
 
+  // Session (set on successful demo login)
+  const [session, setSession] = useState(null); // { source_id, pseudonym, handler_callsign, aor }
+
+  // Live data from Supabase
+  const [liveTaskings, setLiveTaskings] = useState([]);
+  const [liveReports, setLiveReports] = useState([]);
+
   // Lifted state for screens (will be used in Turns 2-3)
   const [tab, setTab] = useState("active");
   const [selectedTask, setSelectedTask] = useState(null);
@@ -1599,22 +1630,115 @@ export default function ArsPocIntegrated() {
   };
 
   // Auth handlers (POC demo — accepts any non-empty callsign + passcode)
-  const authCanLogin = authCallsign.trim().length > 0 && authPasscode.length > 0;
-  const handleLogin = () => {
-    if (!authCanLogin) return;
+  const authCanLogin = authCallsign.trim().length > 0;
+  const doDemoLogin = async () => {
+    const pseudo = authCallsign.trim().toUpperCase();
+    if (!pseudo) return;
+    const { data, error } = await supabase.rpc("mobile_demo_login", { p_pseudonym: pseudo });
+    const row = Array.isArray(data) ? data[0] : data;
+    if (error || !row) {
+      setToast("Unknown callsign — try S-7421, S-3892, S-1156, or S-4407");
+      return;
+    }
+    setSession({
+      source_id: row.source_id,
+      pseudonym: row.pseudonym,
+      handler_callsign: row.handler_callsign,
+      aor: row.aor,
+    });
     setRoute({ screen: "home", history: [], params: {} });
   };
+  const handleLogin = () => { if (authCanLogin) doDemoLogin(); };
   const handleBiometricLogin = () => {
+    if (!authCallsign.trim()) {
+      setToast("Enter a callsign first");
+      return;
+    }
     setAuthBiometricUnlocking(true);
-    setTimeout(() => {
+    setTimeout(async () => {
       setAuthBiometricUnlocking(false);
-      setRoute({ screen: "home", history: [], params: {} });
-    }, 1200);
+      await doDemoLogin();
+    }, 800);
   };
   const handleLogout = () => {
     setAuthCallsign("");
     setAuthPasscode("");
+    setSession(null);
+    setLiveTaskings([]);
+    setLiveReports([]);
     setRoute({ screen: "auth", history: [], params: {} });
+  };
+
+  // Display values (fall back to constants for the auth screen / pre-login)
+  const sessionPseudonym = session?.pseudonym || SOURCE_PSEUDONYM;
+  const sessionHandler = session?.handler_callsign || HANDLER_CALLSIGN;
+
+  // Map DB rows → existing TaskRow shape
+  const mapTasking = (r) => {
+    const priorityMap = { time_sensitive: "time-sensitive", priority: "priority", routine: "routine" };
+    let deadlineMinutes = null;
+    if (r.due_at) {
+      const diffMs = new Date(r.due_at).getTime() - Date.now();
+      deadlineMinutes = Math.max(0, Math.round(diffMs / 60000));
+    }
+    return {
+      _dbId: r.id,
+      id: r.task_id_display || r.id,
+      title: r.title,
+      priority: priorityMap[r.priority] || "routine",
+      pir: r.pir || "—",
+      deadlineMinutes,
+      fresh: !!r.is_new,
+      // task-detail extras (best-effort fallbacks so the existing screen still renders)
+      target: r.target || r.title,
+      guidance: Array.isArray(r.guidance) ? r.guidance : (r.guidance ? [r.guidance] : []),
+      constraint: r.constraint || "Observation only",
+      legalReview: r.legal_review || "—",
+      issuedAt: r.created_at ? relTime(r.created_at) : "—",
+      category: r.category || "person",
+      subCategory: r.sub_category || "",
+    };
+  };
+
+  const mapReport = (r) => {
+    const sub = r.sub_category ? ` · ${String(r.sub_category).replace(/_/g, " ").toUpperCase()}` : "";
+    return {
+      _dbId: r.id,
+      id: r.report_id_display || r.id,
+      title: `${String(r.category || "").toUpperCase()}${sub}`,
+      submittedAt: r.submitted_at ? relTime(r.submitted_at) : "—",
+      status: r.status || "pending_validation",
+    };
+  };
+
+  // CompletedRow expects "validated" | "pending" | "rejected" | "on_hold"
+  const dbStatusToUi = (s) => (s === "pending_validation" ? "pending" : s);
+
+  // Fetcher
+  const fetchLive = async () => {
+    if (!session?.source_id) return;
+    const [{ data: tk }, { data: rp }] = await Promise.all([
+      supabase.from("taskings").select("*").eq("source_id", session.source_id).eq("status", "active").order("created_at", { ascending: false }),
+      supabase.from("reports").select("*").eq("source_id", session.source_id).order("submitted_at", { ascending: false }),
+    ]);
+    setLiveTaskings((tk || []).map(mapTasking));
+    setLiveReports((rp || []).map((r) => ({ ...mapReport(r), status: dbStatusToUi(r.status) })));
+  };
+
+  // Initial + 5s polling while logged in
+  useEffect(() => {
+    if (!session) return;
+    fetchLive();
+    const i = setInterval(fetchLive, 5000);
+    return () => clearInterval(i);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [session?.source_id]);
+
+  // Mark a tasking as no-longer-new when its detail is opened
+  const markTaskingSeen = async (dbId) => {
+    if (!dbId) return;
+    setLiveTaskings((arr) => arr.map((x) => (x._dbId === dbId ? { ...x, fresh: false } : x)));
+    await supabase.from("taskings").update({ is_new: false }).eq("id", dbId);
   };
 
   // Quick Capture handlers
@@ -1632,6 +1756,7 @@ export default function ArsPocIntegrated() {
   // Structured handlers
   const handleCardTap = (cat, locked) => {
     if (locked) setGatedOpen(true);
+    else if (cat.key !== "person") setToast("Category coming in v0.3 — try Person for the demo");
     else setActiveSubCat(cat);
   };
   const handlePickSub = (catKey, subKey) => {
@@ -1644,6 +1769,10 @@ export default function ArsPocIntegrated() {
       setWzPhotoAttached(null); setWzVoiceAttached(null);
       setWzBasis("direct"); setWzConfidence(null);
       navigate("wizardNewPerson");
+      return;
+    }
+    if (catKey !== "person") {
+      setToast("Category coming in v0.3 — try Person for the demo");
       return;
     }
     setToast(`${t.toastFutureScreen}: wizard for ${catKey}/${subKey}`);
@@ -1665,9 +1794,38 @@ export default function ArsPocIntegrated() {
     setTimeout(() => { setWzVoiceRecording(false); setWzVoiceAttached("0:18"); }, 1800);
   };
   const wzCanSubmit = !!wzConfidence;
-  const wzSubmit = () => {
+  const wzSubmit = async () => {
     if (!wzCanSubmit) return;
-    setSyncQueue((q) => q + 1);
+    const sexMap = { m: "male", f: "female", u: "unsure" };
+    const ageMap = { teens: "teens", "20s": "20s", "30s": "30s", "40s": "40s", "50s": "50s", "60p": "60+", u: "unsure" };
+    const buildMap = { slim: "slim", avg: "average", heavy: "heavy", u: "unsure" };
+    const timeMap = { now: "just_now", hour: "within_hour", today: "earlier_today", yest: "yesterday", week: "earlier_this_week", custom: "other" };
+    const basisMap = { direct: "saw_self", hearsay: "someone_told_me", doc: "read_written" };
+    const { data, error } = await supabase.rpc("submit_report", {
+      p_source_pseudonym: sessionPseudonym,
+      p_category: "person",
+      p_sub_category: "new_person_seen",
+      p_person_sex: sexMap[wzSex] || null,
+      p_person_age: ageMap[wzAge] || null,
+      p_person_build: buildMap[wzBuild] || null,
+      p_person_features: wzFeatures || null,
+      p_mgrs: "14R PU 64829 53117",
+      p_named_place: wzNamedPlace || null,
+      p_when_observed: timeMap[wzTime] || null,
+      p_activity: wzActivity || null,
+      p_has_photo: !!wzPhotoAttached,
+      p_has_voice: !!wzVoiceAttached,
+      p_basis_of_knowledge: basisMap[wzBasis] || null,
+      p_confidence: wzConfidence,
+    });
+    if (error) {
+      setToast("Submit failed. Saved to drafts.");
+      return;
+    }
+    const row = Array.isArray(data) ? data[0] : data;
+    const rid = row?.report_id_display || "RPT";
+    setToast(`Report submitted · ${rid}`);
+    fetchLive();
     setSubmitOk(true);
   };
 
@@ -1726,7 +1884,8 @@ export default function ArsPocIntegrated() {
     drafts: t.draftsBreadcrumb, secure: t.secureBreadcrumb,
     wizardNewPerson: t.wizardBreadcrumb,
   };
-  const breadcrumb = breadcrumbMap[route.screen] || "";
+  let breadcrumb = breadcrumbMap[route.screen] || "";
+  if (session?.pseudonym) breadcrumb = breadcrumb.replace(SOURCE_PSEUDONYM, session.pseudonym);
 
   return (
     <div className="min-h-screen w-full flex flex-col items-center justify-start py-6"
@@ -1791,7 +1950,7 @@ export default function ArsPocIntegrated() {
               </button>
               <div className="text-right">
                 <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9, color: AMBER_DIM, letterSpacing: "0.12em" }}>{breadcrumb}</div>
-                <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9, color: AMBER, letterSpacing: "0.12em", marginTop: 2 }}>{t.sourceLabel} · {SOURCE_PSEUDONYM}</div>
+                <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9, color: AMBER, letterSpacing: "0.12em", marginTop: 2 }}>{t.sourceLabel} · {sessionPseudonym}</div>
               </div>
             </div>
           )}
@@ -1890,14 +2049,16 @@ export default function ArsPocIntegrated() {
                     <div style={{ fontFamily: "'IBM Plex Sans', sans-serif", fontSize: 10, color: "rgba(245,245,244,0.5)", letterSpacing: "0.08em", marginTop: 2 }}>{t.arsSub}</div>
                   </div>
                   <div className="text-right">
-                    <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11, color: AMBER, letterSpacing: "0.1em" }}>{t.sourceLabel} · {SOURCE_PSEUDONYM}</div>
+                    <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11, color: AMBER, letterSpacing: "0.1em" }}>{t.sourceLabel} · {sessionPseudonym}</div>
                   </div>
                 </div>
                 <div className="my-3" style={{ height: 1, background: HAIRLINE }} />
               </div>
               <div className="px-4 mb-3"><SyncBanner queueCount={syncQueue} t={t} /></div>
               <div className="px-4 space-y-2.5">
-                <HomeCard icon={ClipboardList} title={t.homeInstructions} sub={t.homeInstructionsSub} badge={t.homeInstructionsBadge} onTap={() => navigate("myInstructions")} />
+                <HomeCard icon={ClipboardList} title={t.homeInstructions} sub={t.homeInstructionsSub}
+                  badge={liveTaskings.filter((x) => x.fresh).length > 0 ? `${liveTaskings.filter((x) => x.fresh).length} NEW` : null}
+                  onTap={() => navigate("myInstructions")} />
                 <HomeCard icon={Send} title={t.homeCollect} sub={t.homeCollectSub} onTap={() => navigate("modeChooser")} />
                 <HomeCard icon={FolderClock} title={t.homeDrafts} sub={t.homeDraftsSub} badge={`${syncQueue} QUEUED`} onTap={() => navigate("drafts")} />
                 <HomeCard icon={ShieldAlert} title={t.homeSecure} sub={t.homeSecureSub} onTap={() => navigate("secure")} danger />
@@ -1930,14 +2091,20 @@ export default function ArsPocIntegrated() {
               </div>
               <div className="mt-3">
                 <TabBar tab={tab} setTab={setTab} t={t}
-                  activeCount={ACTIVE_TASKS.filter(x => x.fresh).length}
+                  activeCount={liveTaskings.length}
                   msgCount={MESSAGES.filter(m => m.unread).length} />
               </div>
               <div className="px-4 mt-3 pb-12 overflow-y-auto" style={{ maxHeight: 560 }}>
                 {tab === "active" && (
                   <div className="space-y-2">
-                    {ACTIVE_TASKS.map((task) => (
-                      <TaskRow key={task.id} task={task} lang={lang} onTap={() => { setSelectedTask(task); navigate("taskDetail"); }} />
+                    {liveTaskings.length === 0 && (
+                      <div className="px-3 py-6 text-center" style={{ border: `1px dashed ${HAIRLINE}`, fontFamily: "'IBM Plex Sans', sans-serif", fontSize: 12, color: AMBER_DIM }}>
+                        No active taskings.
+                      </div>
+                    )}
+                    {liveTaskings.map((task) => (
+                      <TaskRow key={task._dbId || task.id} task={task} lang={lang}
+                        onTap={() => { setSelectedTask(task); markTaskingSeen(task._dbId); navigate("taskDetail"); }} />
                     ))}
                   </div>
                 )}
@@ -1945,7 +2112,14 @@ export default function ArsPocIntegrated() {
                   <div className="space-y-2">{STANDING.map((sr) => <StandingRow key={sr.id} sr={sr} lang={lang} />)}</div>
                 )}
                 {tab === "completed" && (
-                  <div className="space-y-2">{COMPLETED.map((c) => <CompletedRow key={c.id} task={c} lang={lang} />)}</div>
+                  <div className="space-y-2">
+                    {liveReports.length === 0 && (
+                      <div className="px-3 py-6 text-center" style={{ border: `1px dashed ${HAIRLINE}`, fontFamily: "'IBM Plex Sans', sans-serif", fontSize: 12, color: AMBER_DIM }}>
+                        No submitted reports yet.
+                      </div>
+                    )}
+                    {liveReports.map((c) => <CompletedRow key={c._dbId || c.id} task={c} lang={lang} />)}
+                  </div>
                 )}
                 {tab === "messages" && (
                   <div className="space-y-2">{MESSAGES.map((m) => <MessageRow key={m.id} msg={m} lang={lang} onReply={() => setToast(t.toastReply)} />)}</div>
@@ -1964,7 +2138,7 @@ export default function ArsPocIntegrated() {
               <div style={{ fontFamily: "'Rajdhani', sans-serif", fontWeight: 700, fontSize: 16, color: "#F5F5F4", letterSpacing: "0.04em", lineHeight: 1.25, marginBottom: 8 }}>{selectedTask.title}</div>
               <div className="grid grid-cols-3 gap-1.5 mb-3">
                 <MetaCell label={t.tdHeaderIssued} value={selectedTask.issuedAt} mono />
-                <MetaCell label={t.tdHeaderHandler} value={HANDLER_CALLSIGN} mono />
+                <MetaCell label={t.tdHeaderHandler} value={sessionHandler} mono />
                 <MetaCell label={t.dueLabel}
                   value={formatDeadline(selectedTask.deadlineMinutes, t).text}
                   valueColor={formatDeadline(selectedTask.deadlineMinutes, t).color}

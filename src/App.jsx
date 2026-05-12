@@ -1770,6 +1770,10 @@ export default function ArsPocIntegrated() {
       navigate("wizardNewPerson");
       return;
     }
+    if (catKey !== "person") {
+      setToast("Category coming in v0.3 — try Person for the demo");
+      return;
+    }
     setToast(`${t.toastFutureScreen}: wizard for ${catKey}/${subKey}`);
   };
 

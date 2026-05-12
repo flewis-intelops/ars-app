@@ -1818,8 +1818,14 @@ export default function ArsPocIntegrated() {
       p_basis_of_knowledge: basisMap[wzBasis] || null,
       p_confidence: wzConfidence,
     });
+    console.log("[submit_report] data:", data);
+    console.log("[submit_report] error:", error);
     if (error) {
-      setToast("Submit failed. Saved to drafts.");
+      setToast(`Submit failed: ${error.message}`);
+      return;
+    }
+    if (!data) {
+      setToast("Submit failed: no data returned");
       return;
     }
     const row = Array.isArray(data) ? data[0] : data;

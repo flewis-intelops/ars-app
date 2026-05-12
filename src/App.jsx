@@ -1915,7 +1915,7 @@ export default function ArsPocIntegrated() {
               </button>
               <div className="text-right">
                 <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9, color: AMBER_DIM, letterSpacing: "0.12em" }}>{breadcrumb}</div>
-                <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9, color: AMBER, letterSpacing: "0.12em", marginTop: 2 }}>{t.sourceLabel} · {SOURCE_PSEUDONYM}</div>
+                <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9, color: AMBER, letterSpacing: "0.12em", marginTop: 2 }}>{t.sourceLabel} · {sessionPseudonym}</div>
               </div>
             </div>
           )}
@@ -2014,14 +2014,16 @@ export default function ArsPocIntegrated() {
                     <div style={{ fontFamily: "'IBM Plex Sans', sans-serif", fontSize: 10, color: "rgba(245,245,244,0.5)", letterSpacing: "0.08em", marginTop: 2 }}>{t.arsSub}</div>
                   </div>
                   <div className="text-right">
-                    <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11, color: AMBER, letterSpacing: "0.1em" }}>{t.sourceLabel} · {SOURCE_PSEUDONYM}</div>
+                    <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11, color: AMBER, letterSpacing: "0.1em" }}>{t.sourceLabel} · {sessionPseudonym}</div>
                   </div>
                 </div>
                 <div className="my-3" style={{ height: 1, background: HAIRLINE }} />
               </div>
               <div className="px-4 mb-3"><SyncBanner queueCount={syncQueue} t={t} /></div>
               <div className="px-4 space-y-2.5">
-                <HomeCard icon={ClipboardList} title={t.homeInstructions} sub={t.homeInstructionsSub} badge={t.homeInstructionsBadge} onTap={() => navigate("myInstructions")} />
+                <HomeCard icon={ClipboardList} title={t.homeInstructions} sub={t.homeInstructionsSub}
+                  badge={liveTaskings.filter((x) => x.fresh).length > 0 ? `${liveTaskings.filter((x) => x.fresh).length} NEW` : null}
+                  onTap={() => navigate("myInstructions")} />
                 <HomeCard icon={Send} title={t.homeCollect} sub={t.homeCollectSub} onTap={() => navigate("modeChooser")} />
                 <HomeCard icon={FolderClock} title={t.homeDrafts} sub={t.homeDraftsSub} badge={`${syncQueue} QUEUED`} onTap={() => navigate("drafts")} />
                 <HomeCard icon={ShieldAlert} title={t.homeSecure} sub={t.homeSecureSub} onTap={() => navigate("secure")} danger />
@@ -2054,14 +2056,20 @@ export default function ArsPocIntegrated() {
               </div>
               <div className="mt-3">
                 <TabBar tab={tab} setTab={setTab} t={t}
-                  activeCount={ACTIVE_TASKS.filter(x => x.fresh).length}
+                  activeCount={liveTaskings.length}
                   msgCount={MESSAGES.filter(m => m.unread).length} />
               </div>
               <div className="px-4 mt-3 pb-12 overflow-y-auto" style={{ maxHeight: 560 }}>
                 {tab === "active" && (
                   <div className="space-y-2">
-                    {ACTIVE_TASKS.map((task) => (
-                      <TaskRow key={task.id} task={task} lang={lang} onTap={() => { setSelectedTask(task); navigate("taskDetail"); }} />
+                    {liveTaskings.length === 0 && (
+                      <div className="px-3 py-6 text-center" style={{ border: `1px dashed ${HAIRLINE}`, fontFamily: "'IBM Plex Sans', sans-serif", fontSize: 12, color: AMBER_DIM }}>
+                        No active taskings.
+                      </div>
+                    )}
+                    {liveTaskings.map((task) => (
+                      <TaskRow key={task._dbId || task.id} task={task} lang={lang}
+                        onTap={() => { setSelectedTask(task); markTaskingSeen(task._dbId); navigate("taskDetail"); }} />
                     ))}
                   </div>
                 )}
@@ -2069,7 +2077,14 @@ export default function ArsPocIntegrated() {
                   <div className="space-y-2">{STANDING.map((sr) => <StandingRow key={sr.id} sr={sr} lang={lang} />)}</div>
                 )}
                 {tab === "completed" && (
-                  <div className="space-y-2">{COMPLETED.map((c) => <CompletedRow key={c.id} task={c} lang={lang} />)}</div>
+                  <div className="space-y-2">
+                    {liveReports.length === 0 && (
+                      <div className="px-3 py-6 text-center" style={{ border: `1px dashed ${HAIRLINE}`, fontFamily: "'IBM Plex Sans', sans-serif", fontSize: 12, color: AMBER_DIM }}>
+                        No submitted reports yet.
+                      </div>
+                    )}
+                    {liveReports.map((c) => <CompletedRow key={c._dbId || c.id} task={c} lang={lang} />)}
+                  </div>
                 )}
                 {tab === "messages" && (
                   <div className="space-y-2">{MESSAGES.map((m) => <MessageRow key={m.id} msg={m} lang={lang} onReply={() => setToast(t.toastReply)} />)}</div>
@@ -2088,7 +2103,7 @@ export default function ArsPocIntegrated() {
               <div style={{ fontFamily: "'Rajdhani', sans-serif", fontWeight: 700, fontSize: 16, color: "#F5F5F4", letterSpacing: "0.04em", lineHeight: 1.25, marginBottom: 8 }}>{selectedTask.title}</div>
               <div className="grid grid-cols-3 gap-1.5 mb-3">
                 <MetaCell label={t.tdHeaderIssued} value={selectedTask.issuedAt} mono />
-                <MetaCell label={t.tdHeaderHandler} value={HANDLER_CALLSIGN} mono />
+                <MetaCell label={t.tdHeaderHandler} value={sessionHandler} mono />
                 <MetaCell label={t.dueLabel}
                   value={formatDeadline(selectedTask.deadlineMinutes, t).text}
                   valueColor={formatDeadline(selectedTask.deadlineMinutes, t).color}

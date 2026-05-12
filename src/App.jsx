@@ -1723,6 +1723,12 @@ export default function ArsPocIntegrated() {
     ]);
     setLiveTaskings((tk || []).map(mapTasking));
     setLiveReports((rp || []).map((r) => ({ ...mapReport(r), status: dbStatusToUi(r.status) })));
+    try {
+      const ts = new Date().toTimeString().slice(0, 8);
+      const statuses = (rp || []).map((r) => r.status);
+      // eslint-disable-next-line no-console
+      console.log(`[reports query] ${ts} — fetched ${(rp || []).length} report(s), statuses:`, statuses);
+    } catch {}
   };
 
   // Initial + 5s polling while logged in
@@ -1730,9 +1736,24 @@ export default function ArsPocIntegrated() {
     if (!session) return;
     fetchLive();
     const i = setInterval(fetchLive, 5000);
-    return () => clearInterval(i);
+    const onFocus = () => fetchLive();
+    const onVis = () => { if (document.visibilityState === "visible") fetchLive(); };
+    window.addEventListener("focus", onFocus);
+    document.addEventListener("visibilitychange", onVis);
+    return () => {
+      clearInterval(i);
+      window.removeEventListener("focus", onFocus);
+      document.removeEventListener("visibilitychange", onVis);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session?.source_id]);
+
+  // Refetch immediately when user switches into the DONE tab
+  useEffect(() => {
+    if (!session?.source_id) return;
+    if (tab === "completed") fetchLive();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tab, session?.source_id]);
 
   // Mark a tasking as no-longer-new when its detail is opened
   const markTaskingSeen = async (dbId) => {

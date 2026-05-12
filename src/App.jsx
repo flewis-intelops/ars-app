@@ -2809,7 +2809,29 @@ export default function ArsPocIntegrated() {
                           <SummaryRow label={t.sumMedia} value={sumMediaVal} t={t} />
                         </div>
                       </div>
-                      <ChipRow label={t.basisLabel} options={BASIS_OPTIONS} value={wzBasis} onChange={setWzBasis} lang={lang} sub={t.basisHint} />
+                      <div className="mb-3.5">
+                        <div className="mb-1.5 flex items-center justify-between">
+                          <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9, color: AMBER, letterSpacing: "0.14em" }}>── {t.basisLabel}</span>
+                          <span style={{ fontFamily: "'IBM Plex Sans', sans-serif", fontSize: 10, color: AMBER_DIM }}>{t.basisHint}</span>
+                        </div>
+                        <div className="grid grid-cols-3 gap-1.5">
+                          {BASIS_OPTIONS.map((opt) => {
+                            const Icon = opt.icon;
+                            const active = wzBasis === opt.key;
+                            return (
+                              <button key={opt.key} onClick={() => setWzBasis(opt.key)}
+                                className="py-2 px-2 transition-all flex flex-col items-center justify-center gap-1"
+                                style={{ background: active ? AMBER : "transparent", color: active ? BG : AMBER,
+                                  border: `1px solid ${active ? AMBER : HAIRLINE_STRONG}`,
+                                  fontFamily: "'Rajdhani', sans-serif", fontSize: 10.5, fontWeight: 600, letterSpacing: "0.06em",
+                                  lineHeight: 1.15, textAlign: "center", minHeight: 52 }}>
+                                {Icon && <Icon size={12} strokeWidth={1.8} />}
+                                <div>{opt[lang]}</div>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
                       <div className="mb-3">
                         <div className="mb-1.5 flex items-center justify-between">
                           <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9, color: AMBER, letterSpacing: "0.14em" }}>── {t.confidenceLabel}</span>

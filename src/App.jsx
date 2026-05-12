@@ -1884,7 +1884,8 @@ export default function ArsPocIntegrated() {
     drafts: t.draftsBreadcrumb, secure: t.secureBreadcrumb,
     wizardNewPerson: t.wizardBreadcrumb,
   };
-  const breadcrumb = breadcrumbMap[route.screen] || "";
+  let breadcrumb = breadcrumbMap[route.screen] || "";
+  if (session?.pseudonym) breadcrumb = breadcrumb.replace(SOURCE_PSEUDONYM, session.pseudonym);
 
   return (
     <div className="min-h-screen w-full flex flex-col items-center justify-start py-6"

@@ -971,8 +971,9 @@ function CompletedRow({ task, lang }) {
     validated: { label: t.statusValidated, color: GREEN, icon: CheckCircle2 },
     pending: { label: t.statusPending, color: ORANGE, icon: Clock },
     rejected: { label: t.statusRejected, color: RED, icon: AlertCircle },
+    on_hold: { label: "ON HOLD", color: AMBER_DIM, icon: Clock },
   };
-  const s = map[task.status];
+  const s = map[task.status] || map.pending;
   const StatusIcon = s.icon;
   return (
     <div className="w-full p-2.5" style={{ background: "rgba(255,255,255,0.012)", border: `1px solid ${HAIRLINE}` }}>

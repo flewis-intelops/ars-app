@@ -916,7 +916,8 @@ function formatDeadline(mins, t) {
 
 function TaskRow({ task, lang, onTap }) {
   const t = COPY[lang];
-  const dl = formatDeadline(task.deadlineMinutes, t);
+  const hasDeadline = task.deadlineMinutes != null;
+  const dl = hasDeadline ? formatDeadline(task.deadlineMinutes, t) : { text: "NO DEADLINE", color: AMBER_DIM, bold: false };
   return (
     <button onClick={onTap} className="relative w-full text-left transition-all active:scale-[0.99]"
       style={{ background: "rgba(255,255,255,0.015)", border: `1px solid ${HAIRLINE_STRONG}`, padding: "10px 12px" }}>
@@ -928,7 +929,7 @@ function TaskRow({ task, lang, onTap }) {
             style={{ background: AMBER, color: BG, fontFamily: "'JetBrains Mono', monospace", fontSize: 8, letterSpacing: "0.08em", fontWeight: 600 }}>{t.newPill}</span>}
         </div>
         <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, color: dl.color, letterSpacing: "0.08em", fontWeight: dl.bold ? 700 : 400 }}>
-          {t.dueLabel} {dl.text}
+          {hasDeadline ? `${t.dueLabel} ${dl.text}` : dl.text}
         </span>
       </div>
       <div style={{ fontFamily: "'Rajdhani', sans-serif", fontWeight: 600, fontSize: 13, color: "#F5F5F4", letterSpacing: "0.04em", lineHeight: 1.25, marginBottom: 3 }}>{task.title}</div>

@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { supabase } from "@/lib/supabase";
 import {
   ChevronLeft, ChevronRight, ClipboardList, Send, FolderClock, ShieldAlert,
   Languages, WifiOff, Lock, Camera, Video, PenLine, Plane, Mic, X,

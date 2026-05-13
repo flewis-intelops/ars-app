@@ -205,7 +205,7 @@ const COPY = {
     flightBreadcrumb: "DRONE · LIVE", reviewBreadcrumb: "DRONE · REVIEW",
     draftsBreadcrumb: "HOME · DRAFTS", secureBreadcrumb: "HOME · SECURE",
 
-    arsTitle: "ARS", arsSub: "Unit Agent Reporting", homeGreeting: "STANDING BY",
+    arsTitle: "ARS", arsSub: "HUMINT Advanced Reporting System", homeGreeting: "STANDING BY",
     homeInstructions: "MY INSTRUCTIONS", homeInstructionsSub: "Tasking from your handler", homeInstructionsBadge: "3 NEW",
     homeCollect: "COLLECT & REPORT", homeCollectSub: "Capture intel — photo, audio, or guided",
     homeDrafts: "MY DRAFTS", homeDraftsSub: "Resume or sync queued reports",
@@ -371,7 +371,7 @@ const COPY = {
     // Login (POC demo auth)
     authBreadcrumb: "AUTH",
     authTitle: "ARS",
-    authSub: "Unit Agent Reporting",
+    authSub: "HUMINT Advanced Reporting System",
     authCallsignLabel: "CALLSIGN",
     authCallsignPlaceholder: "e.g., S-7421",
     authPasscodeLabel: "PASSCODE",
@@ -398,7 +398,7 @@ const COPY = {
     flightBreadcrumb: "DRON · VUELO", reviewBreadcrumb: "DRON · REVISIÓN",
     draftsBreadcrumb: "INICIO · BORRADORES", secureBreadcrumb: "INICIO · SEGURIDAD",
 
-    arsTitle: "ARS", arsSub: "Reporte de Agente", homeGreeting: "EN ESPERA",
+    arsTitle: "ARS", arsSub: "Sistema Avanzado de Reportes HUMINT", homeGreeting: "EN ESPERA",
     homeInstructions: "MIS TAREAS", homeInstructionsSub: "Instrucciones de su contacto", homeInstructionsBadge: "3 NUEVAS",
     homeCollect: "RECOLECTAR Y REPORTAR", homeCollectSub: "Capturar — foto, audio o asistente",
     homeDrafts: "MIS BORRADORES", homeDraftsSub: "Continuar o sincronizar reportes",
@@ -558,7 +558,7 @@ const COPY = {
     // Login (POC demo auth)
     authBreadcrumb: "AUTH",
     authTitle: "ARS",
-    authSub: "Reporte de Agente",
+    authSub: "Sistema Avanzado de Reportes HUMINT",
     authCallsignLabel: "INDICATIVO",
     authCallsignPlaceholder: "p.ej., S-7421",
     authPasscodeLabel: "CÓDIGO",

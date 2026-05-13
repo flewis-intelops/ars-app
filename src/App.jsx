@@ -26,9 +26,6 @@ const PANEL = "#111316";
 const HAIRLINE = "rgba(201, 169, 97, 0.18)";
 const HAIRLINE_STRONG = "rgba(201, 169, 97, 0.45)";
 
-const HANDLER_CALLSIGN = "WALKER-3";
-const SOURCE_PSEUDONYM = "S-7421";
-
 function relTime(iso) {
   const ms = Date.now() - new Date(iso).getTime();
   const s = Math.max(0, Math.floor(ms / 1000));
@@ -50,10 +47,12 @@ const STANDING = [
   { id: "SR-S7421-007", title: "Corruption indicators at POEs in AO", desc: "Wave-throughs, lane patterns, officials by description. Nothing actionable required — just report what you see.", pirs: ["PIR-5"], activeSince: "Mar 2026" },
 ];
 
+// Seed data — WALKER-3 is the demo handler for all seeded sources at POC scale.
+// Not session-bound; messages tab is intentionally static for v0.2.
 const MESSAGES = [
-  { id: "MSG-0103", from: HANDLER_CALLSIGN, ts: "47m ago", body: "Confirmed receipt of TSK-0089 photos. Excellent work. Stay clear of the route tonight.", unread: true },
-  { id: "MSG-0102", from: HANDLER_CALLSIGN, ts: "1d ago",  body: "TSK-0083 cited in INTSUM. Don't return to that observation point this week.", unread: false },
-  { id: "MSG-0101", from: HANDLER_CALLSIGN, ts: "3d ago",  body: "Quarterly check-in window opens Friday. Standard protocol.", unread: false },
+  { id: "MSG-0103", from: "WALKER-3", ts: "47m ago", body: "Confirmed receipt of TSK-0089 photos. Excellent work. Stay clear of the route tonight.", unread: true },
+  { id: "MSG-0102", from: "WALKER-3", ts: "1d ago",  body: "TSK-0083 cited in INTSUM. Don't return to that observation point this week.", unread: false },
+  { id: "MSG-0101", from: "WALKER-3", ts: "3d ago",  body: "Quarterly check-in window opens Friday. Standard protocol.", unread: false },
 ];
 
 const CATEGORIES = [
@@ -199,7 +198,7 @@ const COPY = {
     demoLine: "DEMO // NO REAL INTEL",
     backLabel: "BACK", sourceLabel: "SRC",
     appVer: "ARS POC · INTEGRATED · v1.0", queue: "queued", syncOffline: "OFFLINE",
-    homeBreadcrumb: "ARS · " + SOURCE_PSEUDONYM, modeBreadcrumb: "HOME · COLLECT",
+    homeBreadcrumb: "ARS", modeBreadcrumb: "HOME · COLLECT",
     instructionsBreadcrumb: "HOME · INSTRUCTIONS", taskBreadcrumb: "INSTRUCTIONS · TASK",
     qcBreadcrumb: "HOME · COLLECT · QUICK", structuredBreadcrumb: "HOME · COLLECT · STRUCTURED",
     droneBreadcrumb: "HOME · COLLECT · DRONE", preMissionBreadcrumb: "DRONE · PLAN",
@@ -392,7 +391,7 @@ const COPY = {
     demoLine: "DEMO // NO ES REAL",
     backLabel: "ATRÁS", sourceLabel: "FNT",
     appVer: "ARS POC · INTEGRADO · v1.0", queue: "en cola", syncOffline: "SIN CONEXIÓN",
-    homeBreadcrumb: "ARS · " + SOURCE_PSEUDONYM, modeBreadcrumb: "INICIO · RECOLECTAR",
+    homeBreadcrumb: "ARS", modeBreadcrumb: "INICIO · RECOLECTAR",
     instructionsBreadcrumb: "INICIO · TAREAS", taskBreadcrumb: "TAREAS · DETALLE",
     qcBreadcrumb: "INICIO · RECOLECTAR · RÁPIDA", structuredBreadcrumb: "INICIO · RECOLECTAR · GUIADO",
     droneBreadcrumb: "INICIO · RECOLECTAR · DRON", preMissionBreadcrumb: "DRON · PLAN",
@@ -1645,8 +1644,8 @@ export default function ArsPocIntegrated() {
   };
 
   // Display values (fall back to constants for the auth screen / pre-login)
-  const sessionPseudonym = session?.pseudonym || SOURCE_PSEUDONYM;
-  const sessionHandler = session?.handler_callsign || HANDLER_CALLSIGN;
+  const sessionPseudonym = session?.pseudonym ?? "—";
+  const sessionHandler = session?.handler_callsign ?? "—";
 
   // Map DB rows → existing TaskRow shape
   const mapTasking = (r) => {
@@ -1896,7 +1895,8 @@ export default function ArsPocIntegrated() {
 
   const breadcrumbMap = {
     auth: t.authBreadcrumb,
-    home: t.homeBreadcrumb, modeChooser: t.modeBreadcrumb,
+    home: session?.pseudonym ? `${t.homeBreadcrumb} · ${session.pseudonym}` : t.homeBreadcrumb,
+    modeChooser: t.modeBreadcrumb,
     myInstructions: t.instructionsBreadcrumb, taskDetail: t.taskBreadcrumb,
     qcPicker: t.qcBreadcrumb, qcVideoRec: t.qcBreadcrumb, qcAudioRec: t.qcBreadcrumb, qcReview: t.qcBreadcrumb,
     structured: t.structuredBreadcrumb,
@@ -1906,7 +1906,6 @@ export default function ArsPocIntegrated() {
     wizardNewPerson: t.wizardBreadcrumb,
   };
   let breadcrumb = breadcrumbMap[route.screen] || "";
-  if (session?.pseudonym) breadcrumb = breadcrumb.replace(SOURCE_PSEUDONYM, session.pseudonym);
 
   return (
     <div className="min-h-screen w-full flex flex-col items-center justify-start py-6"

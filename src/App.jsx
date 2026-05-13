@@ -26,9 +26,6 @@ const PANEL = "#111316";
 const HAIRLINE = "rgba(201, 169, 97, 0.18)";
 const HAIRLINE_STRONG = "rgba(201, 169, 97, 0.45)";
 
-const HANDLER_CALLSIGN = "WALKER-3";
-const SOURCE_PSEUDONYM = "S-7421";
-
 function relTime(iso) {
   const ms = Date.now() - new Date(iso).getTime();
   const s = Math.max(0, Math.floor(ms / 1000));
@@ -50,10 +47,12 @@ const STANDING = [
   { id: "SR-S7421-007", title: "Corruption indicators at POEs in AO", desc: "Wave-throughs, lane patterns, officials by description. Nothing actionable required — just report what you see.", pirs: ["PIR-5"], activeSince: "Mar 2026" },
 ];
 
+// Seed data — WALKER-3 is the demo handler for all seeded sources at POC scale.
+// Not session-bound; messages tab is intentionally static for v0.2.
 const MESSAGES = [
-  { id: "MSG-0103", from: HANDLER_CALLSIGN, ts: "47m ago", body: "Confirmed receipt of TSK-0089 photos. Excellent work. Stay clear of the route tonight.", unread: true },
-  { id: "MSG-0102", from: HANDLER_CALLSIGN, ts: "1d ago",  body: "TSK-0083 cited in INTSUM. Don't return to that observation point this week.", unread: false },
-  { id: "MSG-0101", from: HANDLER_CALLSIGN, ts: "3d ago",  body: "Quarterly check-in window opens Friday. Standard protocol.", unread: false },
+  { id: "MSG-0103", from: "WALKER-3", ts: "47m ago", body: "Confirmed receipt of TSK-0089 photos. Excellent work. Stay clear of the route tonight.", unread: true },
+  { id: "MSG-0102", from: "WALKER-3", ts: "1d ago",  body: "TSK-0083 cited in INTSUM. Don't return to that observation point this week.", unread: false },
+  { id: "MSG-0101", from: "WALKER-3", ts: "3d ago",  body: "Quarterly check-in window opens Friday. Standard protocol.", unread: false },
 ];
 
 const CATEGORIES = [

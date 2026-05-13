@@ -259,7 +259,7 @@ const COPY = {
     structuredVoiceHint: "Or speak — I'll pick a category", tasked: "TASKED", locked: "GATED",
     requestAccessTitle: "VETTING REQUIRED",
     requestAccessBody: "Reporting on corrupted officials carries operational, legal, and OPSEC weight. This category requires handler authorization before use.",
-    requestAccessAction: "Request Access via Handler", requestAccessNote: "Your handler will receive a vetting request. No report is created.",
+    requestAccessAction: "Acknowledged", requestAccessNote: "Access request workflow — coming in v0.3. No request is sent yet.",
     closeBtn: "Close", iaRef: "IA REF",
     subModalSubtitle: "Pick a sub-category to start the wizard.", subModalIaNote: "Always-prompted fields per IA §5.x will follow.",
     prePopBanner: "PRE-POP FROM TASK",
@@ -452,7 +452,7 @@ const COPY = {
     structuredVoiceHint: "O hable — yo elijo categoría", tasked: "TAREA", locked: "GATED",
     requestAccessTitle: "VETTING REQUERIDO",
     requestAccessBody: "Reportar sobre funcionarios corruptos tiene peso operativo, legal y de OPSEC. Requiere autorización del contacto.",
-    requestAccessAction: "Solicitar acceso", requestAccessNote: "Su contacto recibirá la solicitud.",
+    requestAccessAction: "Entendido", requestAccessNote: "Flujo de solicitud de acceso — próximamente en v0.3. No se envía solicitud aún.",
     closeBtn: "Cerrar", iaRef: "REF IA",
     subModalSubtitle: "Elija una sub-categoría.", subModalIaNote: "Los campos siempre solicitados (IA §5.x) seguirán.",
     prePopBanner: "PRE-LLENADO POR TAREA",
@@ -646,10 +646,6 @@ function GatedModal({ open, t, onClose }) {
         <button onClick={onClose} className="w-full py-3 mb-2"
           style={{ background: AMBER, color: BG, fontFamily: "'Rajdhani', sans-serif", fontWeight: 600, fontSize: 13, letterSpacing: "0.1em" }}>
           {t.requestAccessAction}
-        </button>
-        <button onClick={onClose} className="w-full py-2"
-          style={{ background: "transparent", color: AMBER_DIM, fontFamily: "'Rajdhani', sans-serif", fontSize: 12, letterSpacing: "0.08em", border: `1px solid ${HAIRLINE}` }}>
-          {t.closeBtn}
         </button>
         <div style={{ fontFamily: "'IBM Plex Sans', sans-serif", fontSize: 10, color: "rgba(245,245,244,0.4)", marginTop: 12, lineHeight: 1.5, textAlign: "center" }}>{t.requestAccessNote}</div>
       </div>
@@ -1060,9 +1056,9 @@ function ActionRow({ icon: Icon, label, sub, onTap, danger = false }) {
 // =============================================================================
 // TURN 3 HELPERS — Structured + Quick Capture + Drone widgets
 // =============================================================================
-function CategoryCard({ cat, lang, vetted, hasTask, prePop, onTap }) {
+function CategoryCard({ cat, lang, hasTask, prePop, onTap }) {
   const Icon = cat.icon;
-  const locked = cat.gated && !vetted;
+  const locked = cat.gated;
   return (
     <button onClick={() => onTap(cat, locked)} className="relative text-left transition-all duration-100 active:scale-[0.98]"
       style={{ background: prePop ? "rgba(201,169,97,0.10)" : (locked ? "rgba(255,255,255,0.01)" : "rgba(255,255,255,0.02)"),

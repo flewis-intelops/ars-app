@@ -1528,6 +1528,7 @@ export default function ArsPocIntegrated() {
   const [wzVoiceRecording, setWzVoiceRecording] = useState(false);
   const [wzBasis, setWzBasis] = useState("direct");
   const [wzConfidence, setWzConfidence] = useState(null);
+  const [wzIsSubmitting, setWzIsSubmitting] = useState(false);
 
   const [now, setNow] = useState(new Date());
   const [pulse, setPulse] = useState(false);
@@ -1794,54 +1795,62 @@ export default function ArsPocIntegrated() {
       setToast("Please choose how you know this and your confidence level.");
       return;
     }
-    const basisMap = { direct: "saw_self", hearsay: "someone_told_me", doc: "read_written" };
-    const mappedBasis = basisMap[wzBasis];
-    if (!mappedBasis) {
-      console.error("[wzSubmit] basis mapping failed", { wzBasis, basisMap });
-      setToast("Internal error: unrecognized basis selection.");
-      return;
+    if (wzIsSubmitting) return;
+    setWzIsSubmitting(true);
+    try {
+      const basisMap = { direct: "saw_self", hearsay: "someone_told_me", doc: "read_written" };
+      const mappedBasis = basisMap[wzBasis];
+      if (!mappedBasis) {
+        console.error("[wzSubmit] basis mapping failed", { wzBasis, basisMap });
+        setToast("Internal error: unrecognized basis selection.");
+        return;
+      }
+      if (!["low", "med", "high"].includes(wzConfidence)) {
+        console.error("[wzSubmit] confidence mapping failed", { wzConfidence });
+        setToast("Internal error: unrecognized confidence selection.");
+        return;
+      }
+      const sexMap = { m: "male", f: "female", u: "unsure" };
+      const ageMap = { teens: "teens", "20s": "20s", "30s": "30s", "40s": "40s", "50s": "50s", "60p": "60+", u: "unsure" };
+      const buildMap = { slim: "slim", avg: "average", heavy: "heavy", u: "unsure" };
+      const timeMap = { now: "just_now", hour: "within_hour", today: "earlier_today", yest: "yesterday", week: "earlier_this_week", custom: "other" };
+      const { data, error } = await supabase.rpc("submit_report", {
+        p_source_pseudonym: sessionPseudonym,
+        p_category: "person",
+        p_sub_category: "new_person_seen",
+        p_person_sex: sexMap[wzSex],
+        p_person_age: ageMap[wzAge],
+        p_person_build: buildMap[wzBuild],
+        p_person_features: wzFeatures || null,
+        p_mgrs: "14R PU 64829 53117",
+        p_named_place: wzNamedPlace || null,
+        p_when_observed: timeMap[wzTime],
+        p_activity: wzActivity || null,
+        p_has_photo: !!wzPhotoAttached,
+        p_has_voice: !!wzVoiceAttached,
+        p_basis_of_knowledge: mappedBasis,
+        p_confidence: wzConfidence,
+      });
+      console.log("[submit_report] data:", data);
+      console.log("[submit_report] error:", error);
+      if (error) {
+        setToast(`Submit failed: ${error.message}`);
+        return;
+      }
+      if (!data) {
+        setToast("Submit failed: no data returned");
+        return;
+      }
+      const row = Array.isArray(data) ? data[0] : data;
+      const rid = row?.report_id_display || "RPT";
+      setToast(`Report submitted · ${rid}`);
+      fetchLive();
+      setSubmitOk(true);
+    } catch (e) {
+      setToast(`Submit failed: ${e instanceof Error ? e.message : "unknown error"}`);
+    } finally {
+      setWzIsSubmitting(false);
     }
-    if (!["low", "med", "high"].includes(wzConfidence)) {
-      console.error("[wzSubmit] confidence mapping failed", { wzConfidence });
-      setToast("Internal error: unrecognized confidence selection.");
-      return;
-    }
-    const sexMap = { m: "male", f: "female", u: "unsure" };
-    const ageMap = { teens: "teens", "20s": "20s", "30s": "30s", "40s": "40s", "50s": "50s", "60p": "60+", u: "unsure" };
-    const buildMap = { slim: "slim", avg: "average", heavy: "heavy", u: "unsure" };
-    const timeMap = { now: "just_now", hour: "within_hour", today: "earlier_today", yest: "yesterday", week: "earlier_this_week", custom: "other" };
-    const { data, error } = await supabase.rpc("submit_report", {
-      p_source_pseudonym: sessionPseudonym,
-      p_category: "person",
-      p_sub_category: "new_person_seen",
-      p_person_sex: sexMap[wzSex],
-      p_person_age: ageMap[wzAge],
-      p_person_build: buildMap[wzBuild],
-      p_person_features: wzFeatures || null,
-      p_mgrs: "14R PU 64829 53117",
-      p_named_place: wzNamedPlace || null,
-      p_when_observed: timeMap[wzTime],
-      p_activity: wzActivity || null,
-      p_has_photo: !!wzPhotoAttached,
-      p_has_voice: !!wzVoiceAttached,
-      p_basis_of_knowledge: mappedBasis,
-      p_confidence: wzConfidence,
-    });
-    console.log("[submit_report] data:", data);
-    console.log("[submit_report] error:", error);
-    if (error) {
-      setToast(`Submit failed: ${error.message}`);
-      return;
-    }
-    if (!data) {
-      setToast("Submit failed: no data returned");
-      return;
-    }
-    const row = Array.isArray(data) ? data[0] : data;
-    const rid = row?.report_id_display || "RPT";
-    setToast(`Report submitted · ${rid}`);
-    fetchLive();
-    setSubmitOk(true);
   };
 
   // Drone handlers
@@ -2886,14 +2895,15 @@ export default function ArsPocIntegrated() {
                             fontFamily: "'Rajdhani', sans-serif", fontSize: 11, fontWeight: 600, letterSpacing: "0.1em" }}>
                           {t.wzBack}
                         </button>
-                        <button onClick={wzSubmit} disabled={!wzCanSubmit}
+                        <button onClick={wzSubmit} disabled={!wzCanSubmit || wzIsSubmitting}
                           className="flex-1 py-2 transition-all"
                           style={{ background: wzCanSubmit ? AMBER : "transparent",
                             color: wzCanSubmit ? BG : AMBER_DIM,
                             border: `1px solid ${wzCanSubmit ? AMBER : HAIRLINE}`,
                             fontFamily: "'Rajdhani', sans-serif", fontSize: 12, fontWeight: 700, letterSpacing: "0.14em",
-                            cursor: wzCanSubmit ? "pointer" : "not-allowed" }}>
-                          {t.wzSubmit}
+                            cursor: wzCanSubmit && !wzIsSubmitting ? "pointer" : "not-allowed",
+                            opacity: wzIsSubmitting ? 0.6 : 1 }}>
+                          {wzIsSubmitting ? (lang === "es" ? "Enviando…" : "Submitting…") : t.wzSubmit}
                         </button>
                       </div>
                       {!wzCanSubmit && (

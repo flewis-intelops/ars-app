@@ -197,15 +197,15 @@ const COPY = {
     classification: "DEMO // SIMULATED HUMINT // NOT REAL INTELLIGENCE",
     demoLine: "DEMO // NO REAL INTEL",
     backLabel: "BACK", sourceLabel: "SRC",
-    appVer: "ARS POC · INTEGRATED · v1.0", queue: "queued", syncOffline: "OFFLINE",
-    homeBreadcrumb: "ARS", modeBreadcrumb: "HOME · COLLECT",
+    appVer: "HARS POC · INTEGRATED · v1.0", queue: "queued", syncOffline: "OFFLINE",
+    homeBreadcrumb: "HARS", modeBreadcrumb: "HOME · COLLECT",
     instructionsBreadcrumb: "HOME · INSTRUCTIONS", taskBreadcrumb: "INSTRUCTIONS · TASK",
     qcBreadcrumb: "HOME · COLLECT · QUICK", structuredBreadcrumb: "HOME · COLLECT · STRUCTURED",
     droneBreadcrumb: "HOME · COLLECT · DRONE", preMissionBreadcrumb: "DRONE · PLAN",
     flightBreadcrumb: "DRONE · LIVE", reviewBreadcrumb: "DRONE · REVIEW",
     draftsBreadcrumb: "HOME · DRAFTS", secureBreadcrumb: "HOME · SECURE",
 
-    arsTitle: "ARS", arsSub: "HUMINT Advanced Reporting System", homeGreeting: "STANDING BY",
+    arsTitle: "HARS", arsSub: "HUMINT Advanced Reporting System", homeGreeting: "STANDING BY",
     homeInstructions: "MY INSTRUCTIONS", homeInstructionsSub: "Tasking from your handler", homeInstructionsBadge: "3 NEW",
     homeCollect: "COLLECT & REPORT", homeCollectSub: "Capture intel — photo, audio, or guided",
     homeDrafts: "MY DRAFTS", homeDraftsSub: "Resume or sync queued reports",
@@ -370,7 +370,7 @@ const COPY = {
 
     // Login (POC demo auth)
     authBreadcrumb: "AUTH",
-    authTitle: "ARS",
+    authTitle: "HARS",
     authSub: "HUMINT Advanced Reporting System",
     authCallsignLabel: "CALLSIGN",
     authCallsignPlaceholder: "e.g., S-7421",
@@ -390,15 +390,15 @@ const COPY = {
     classification: "DEMO // HUMINT SIMULADO // NO ES INTELIGENCIA REAL",
     demoLine: "DEMO // NO ES REAL",
     backLabel: "ATRÁS", sourceLabel: "FNT",
-    appVer: "ARS POC · INTEGRADO · v1.0", queue: "en cola", syncOffline: "SIN CONEXIÓN",
-    homeBreadcrumb: "ARS", modeBreadcrumb: "INICIO · RECOLECTAR",
+    appVer: "HARS POC · INTEGRADO · v1.0", queue: "en cola", syncOffline: "SIN CONEXIÓN",
+    homeBreadcrumb: "HARS", modeBreadcrumb: "INICIO · RECOLECTAR",
     instructionsBreadcrumb: "INICIO · TAREAS", taskBreadcrumb: "TAREAS · DETALLE",
     qcBreadcrumb: "INICIO · RECOLECTAR · RÁPIDA", structuredBreadcrumb: "INICIO · RECOLECTAR · GUIADO",
     droneBreadcrumb: "INICIO · RECOLECTAR · DRON", preMissionBreadcrumb: "DRON · PLAN",
     flightBreadcrumb: "DRON · VUELO", reviewBreadcrumb: "DRON · REVISIÓN",
     draftsBreadcrumb: "INICIO · BORRADORES", secureBreadcrumb: "INICIO · SEGURIDAD",
 
-    arsTitle: "ARS", arsSub: "Sistema Avanzado de Reportes HUMINT", homeGreeting: "EN ESPERA",
+    arsTitle: "HARS", arsSub: "Sistema Avanzado de Reportes HUMINT", homeGreeting: "EN ESPERA",
     homeInstructions: "MIS TAREAS", homeInstructionsSub: "Instrucciones de su contacto", homeInstructionsBadge: "3 NUEVAS",
     homeCollect: "RECOLECTAR Y REPORTAR", homeCollectSub: "Capturar — foto, audio o asistente",
     homeDrafts: "MIS BORRADORES", homeDraftsSub: "Continuar o sincronizar reportes",
@@ -557,7 +557,7 @@ const COPY = {
 
     // Login (POC demo auth)
     authBreadcrumb: "AUTH",
-    authTitle: "ARS",
+    authTitle: "HARS",
     authSub: "Sistema Avanzado de Reportes HUMINT",
     authCallsignLabel: "INDICATIVO",
     authCallsignPlaceholder: "p.ej., S-7421",
@@ -1921,7 +1921,7 @@ export default function ArsPocIntegrated() {
       </div>
 
       <div className="text-center mb-3" style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, color: AMBER_DIM, letterSpacing: "0.18em" }}>
-        ARS POC · INTEGRATED · ALL FLOWS WIRED
+        HARS POC · INTEGRATED · ALL FLOWS WIRED
       </div>
 
       <div className="relative" style={{ width: 390, height: 800, background: BG, border: `1px solid ${HAIRLINE_STRONG}`,

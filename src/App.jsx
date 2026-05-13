@@ -1528,6 +1528,7 @@ export default function ArsPocIntegrated() {
   const [wzVoiceRecording, setWzVoiceRecording] = useState(false);
   const [wzBasis, setWzBasis] = useState("direct");
   const [wzConfidence, setWzConfidence] = useState(null);
+  const [wzIsSubmitting, setWzIsSubmitting] = useState(false);
 
   const [now, setNow] = useState(new Date());
   const [pulse, setPulse] = useState(false);

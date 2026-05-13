@@ -1644,8 +1644,8 @@ export default function ArsPocIntegrated() {
   };
 
   // Display values (fall back to constants for the auth screen / pre-login)
-  const sessionPseudonym = session?.pseudonym || SOURCE_PSEUDONYM;
-  const sessionHandler = session?.handler_callsign || HANDLER_CALLSIGN;
+  const sessionPseudonym = session?.pseudonym ?? "—";
+  const sessionHandler = session?.handler_callsign ?? "—";
 
   // Map DB rows → existing TaskRow shape
   const mapTasking = (r) => {
@@ -1895,7 +1895,8 @@ export default function ArsPocIntegrated() {
 
   const breadcrumbMap = {
     auth: t.authBreadcrumb,
-    home: t.homeBreadcrumb, modeChooser: t.modeBreadcrumb,
+    home: session?.pseudonym ? `${t.homeBreadcrumb} · ${session.pseudonym}` : t.homeBreadcrumb,
+    modeChooser: t.modeBreadcrumb,
     myInstructions: t.instructionsBreadcrumb, taskDetail: t.taskBreadcrumb,
     qcPicker: t.qcBreadcrumb, qcVideoRec: t.qcBreadcrumb, qcAudioRec: t.qcBreadcrumb, qcReview: t.qcBreadcrumb,
     structured: t.structuredBreadcrumb,
@@ -1905,7 +1906,6 @@ export default function ArsPocIntegrated() {
     wizardNewPerson: t.wizardBreadcrumb,
   };
   let breadcrumb = breadcrumbMap[route.screen] || "";
-  if (session?.pseudonym) breadcrumb = breadcrumb.replace(SOURCE_PSEUDONYM, session.pseudonym);
 
   return (
     <div className="min-h-screen w-full flex flex-col items-center justify-start py-6"

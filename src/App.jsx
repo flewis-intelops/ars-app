@@ -44,35 +44,10 @@ function relTime(iso) {
 // =============================================================================
 // SYNTHETIC DATA
 // =============================================================================
-const ACTIVE_TASKS = [
-  { id: "TSK-S7421-0089", priority: "time-sensitive", title: "Document movement of suspected lieutenant vehicle",
-    target: "White Chevrolet Tahoe, no plates. Believed to be transporting a faction lieutenant tonight.",
-    guidance: ["Document the route the vehicle takes from the residence near Ej. Las Flores.","If safe, photograph the vehicle and any visible occupants.","Note any escort or trailing vehicles.","Time of departure and arrival if observed."],
-    constraint: "Observation only · Do not approach · Do not engage", legalReview: "Cleared 47m ago", issuedAt: "47m ago",
-    deadlineMinutes: 4*60+12, pir: "PIR-1", pirDesc: "HVT pattern of life", category: "person", subCategory: "pattern-of-life", fresh: true },
-  { id: "TSK-S7421-0091", priority: "priority", title: "Pattern of life — Plaza Allende café",
-    target: "Mid-day attendance pattern at the café on the south side of Plaza Allende.",
-    guidance: ["Note who arrives between 11:00 and 15:00 local on Tue/Thu.","Photograph license plates of vehicles parked on Calle 5.","Listen for languages spoken — flag any non-Spanish."],
-    constraint: "Observation only · Do not approach contacts", legalReview: "Cleared 1d ago", issuedAt: "1d ago",
-    deadlineMinutes: 5*24*60, pir: "PIR-1", pirDesc: "HVT pattern of life", category: "person", subCategory: "pattern-of-life", fresh: true },
-  { id: "TSK-S7421-0093", priority: "routine", title: "RFI — confirm or refute weekend meeting",
-    target: "Rumored faction meeting at the Mezquite ranch this weekend.",
-    guidance: ["From a safe distance, confirm whether unusual vehicle activity occurs Sat/Sun.","Number and type of vehicles, and rough head count if visible.","Do not approach the property."],
-    constraint: "Observation only · Maintain distance · Do not approach", legalReview: "Cleared 2d ago", issuedAt: "2d ago",
-    deadlineMinutes: 2*24*60+6*60, pir: "PIR-2", pirDesc: "TCO structure & hierarchy", category: "place", subCategory: "meeting-site", fresh: true },
-];
-
 const STANDING = [
   { id: "SR-S7421-002", title: "New faces in known safehouses", desc: "Any newly-observed individuals at addresses already in your reporting set. Photo-document if safe.", pirs: ["PIR-1","PIR-2"], activeSince: "Jan 2026" },
   { id: "SR-S7421-005", title: "Bulk cash movement (>$10K equiv)", desc: "Any sighting of cash courier activity, large-volume cash transactions, or unexplained luxury asset purchases in the AO.", pirs: ["PIR-3","PIR-4"], activeSince: "Feb 2026" },
   { id: "SR-S7421-007", title: "Corruption indicators at POEs in AO", desc: "Wave-throughs, lane patterns, officials by description. Nothing actionable required — just report what you see.", pirs: ["PIR-5"], activeSince: "Mar 2026" },
-];
-
-const COMPLETED = [
-  { id: "TSK-S7421-0085", title: "Drug lab confirmation, off Hwy 23", submittedAt: "1h ago", status: "validated" },
-  { id: "TSK-S7421-0083", title: "Vehicle convoy on Hwy 40", submittedAt: "4h ago", status: "validated" },
-  { id: "TSK-S7421-0080", title: "Auto detail shop activity", submittedAt: "6h ago", status: "pending" },
-  { id: "TSK-S7421-0078", title: "Banner / propaganda survey", submittedAt: "1d ago", status: "validated" },
 ];
 
 const MESSAGES = [
@@ -1723,10 +1698,12 @@ export default function ArsPocIntegrated() {
     ]);
     setLiveTaskings((tk || []).map(mapTasking));
     setLiveReports((rp || []).map((r) => ({ ...mapReport(r), status: dbStatusToUi(r.validation_status) })));
-    try {
-      // eslint-disable-next-line no-console
-      console.log("[reports query]", new Date().toLocaleTimeString(), "fetched", rp?.length || 0, "report(s), full first row:", rp?.[0]);
-    } catch {}
+    if (import.meta.env.DEV) {
+      try {
+        // eslint-disable-next-line no-console
+        console.log("[reports query]", new Date().toLocaleTimeString(), "fetched", rp?.length || 0, "report(s), full first row:", rp?.[0]);
+      } catch {}
+    }
   };
 
   // Initial + 5s polling while logged in

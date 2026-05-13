@@ -2895,14 +2895,15 @@ export default function ArsPocIntegrated() {
                             fontFamily: "'Rajdhani', sans-serif", fontSize: 11, fontWeight: 600, letterSpacing: "0.1em" }}>
                           {t.wzBack}
                         </button>
-                        <button onClick={wzSubmit} disabled={!wzCanSubmit}
+                        <button onClick={wzSubmit} disabled={!wzCanSubmit || wzIsSubmitting}
                           className="flex-1 py-2 transition-all"
                           style={{ background: wzCanSubmit ? AMBER : "transparent",
                             color: wzCanSubmit ? BG : AMBER_DIM,
                             border: `1px solid ${wzCanSubmit ? AMBER : HAIRLINE}`,
                             fontFamily: "'Rajdhani', sans-serif", fontSize: 12, fontWeight: 700, letterSpacing: "0.14em",
-                            cursor: wzCanSubmit ? "pointer" : "not-allowed" }}>
-                          {t.wzSubmit}
+                            cursor: wzCanSubmit && !wzIsSubmitting ? "pointer" : "not-allowed",
+                            opacity: wzIsSubmitting ? 0.6 : 1 }}>
+                          {wzIsSubmitting ? (lang === "es" ? "Enviando…" : "Submitting…") : t.wzSubmit}
                         </button>
                       </div>
                       {!wzCanSubmit && (

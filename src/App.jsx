@@ -224,6 +224,7 @@ const COPY = {
     standingPersistentLabel: "ALWAYS-ON · NO DEADLINE", standingActiveSince: "ACTIVE SINCE",
     statusValidated: "VALIDATED", statusPending: "PENDING VALIDATION", statusRejected: "REJECTED",
     completedSubmittedAt: "SUBMITTED", msgUnread: "UNREAD", msgReply: "REPLY",
+    handlerNoteLabel: "HANDLER NOTE",
 
     tdHeaderIssued: "ISSUED", tdHeaderHandler: "HANDLER", tdHeaderLegal: "LEGAL REVIEW",
     tdTarget: "TARGET", tdGuidance: "GUIDANCE", tdConstraints: "CONSTRAINTS",
@@ -417,6 +418,7 @@ const COPY = {
     standingPersistentLabel: "PERMANENTE · SIN VENCIMIENTO", standingActiveSince: "ACTIVA DESDE",
     statusValidated: "VALIDADA", statusPending: "PENDIENTE VALIDACIÓN", statusRejected: "RECHAZADA",
     completedSubmittedAt: "ENVIADA", msgUnread: "NO LEÍDO", msgReply: "RESPONDER",
+    handlerNoteLabel: "NOTA DEL HANDLER",
 
     tdHeaderIssued: "EMITIDA", tdHeaderHandler: "CONTACTO", tdHeaderLegal: "REVISIÓN LEGAL",
     tdTarget: "OBJETIVO", tdGuidance: "INSTRUCCIONES", tdConstraints: "RESTRICCIONES",
@@ -982,6 +984,34 @@ function CompletedRow({ task, lang }) {
           <StatusIcon size={9} strokeWidth={2} />{s.label}
         </span>
       </div>
+      {task.handlerNote && (
+        <div style={{
+          marginTop: 10,
+          padding: 10,
+          border: `1px solid ${HAIRLINE}`,
+          borderLeft: `2px solid ${AMBER}`,
+          background: "rgba(201,169,97,0.04)",
+        }}>
+          <div style={{
+            fontFamily: "'JetBrains Mono', monospace",
+            fontSize: 9,
+            color: AMBER_DIM,
+            letterSpacing: "0.18em",
+            marginBottom: 4,
+          }}>
+            {t.handlerNoteLabel}{task.handlerCallsign ? ` · ${task.handlerCallsign}` : ""}{task.validatedAt ? ` · ${task.validatedAt}` : ""}
+          </div>
+          <div style={{
+            fontFamily: "'IBM Plex Sans', sans-serif",
+            fontSize: 12,
+            color: "rgba(245,245,244,0.85)",
+            lineHeight: 1.45,
+            whiteSpace: "pre-wrap",
+          }}>
+            {task.handlerNote}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -1680,6 +1710,9 @@ export default function ArsPocIntegrated() {
       title: `${String(r.category || "").toUpperCase()}${sub}`,
       submittedAt: r.submitted_at ? relTime(r.submitted_at) : "—",
       status: r.validation_status || "pending_validation",
+      handlerNote: r.validation_notes || null,
+      validatedAt: r.validated_at ? relTime(r.validated_at) : null,
+      handlerCallsign: r.handlers?.callsign || null,
     };
   };
 
@@ -1691,7 +1724,7 @@ export default function ArsPocIntegrated() {
     if (!session?.source_id) return;
     const [{ data: tk }, { data: rp }] = await Promise.all([
       supabase.from("taskings").select("*").eq("source_id", session.source_id).eq("status", "active").order("created_at", { ascending: false }),
-      supabase.from("reports").select("id, report_id_display, category, sub_category, validation_status, submitted_at, source_id, handler_id").eq("source_id", session.source_id).order("submitted_at", { ascending: false }),
+      supabase.from("reports").select("id, report_id_display, category, sub_category, validation_status, validation_notes, validated_at, submitted_at, source_id, handler_id, validated_by_handler_id, handlers!validated_by_handler_id(callsign)").eq("source_id", session.source_id).order("submitted_at", { ascending: false }),
     ]);
     setLiveTaskings((tk || []).map(mapTasking));
     setLiveReports((rp || []).map((r) => ({ ...mapReport(r), status: dbStatusToUi(r.validation_status) })));

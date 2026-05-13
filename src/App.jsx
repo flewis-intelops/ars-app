@@ -1823,26 +1823,37 @@ export default function ArsPocIntegrated() {
       setToast("Please choose how you know this and your confidence level.");
       return;
     }
+    const basisMap = { direct: "saw_self", hearsay: "someone_told_me", doc: "read_written" };
+    const mappedBasis = basisMap[wzBasis];
+    if (!mappedBasis) {
+      console.error("[wzSubmit] basis mapping failed", { wzBasis, basisMap });
+      setToast("Internal error: unrecognized basis selection.");
+      return;
+    }
+    if (!["low", "med", "high"].includes(wzConfidence)) {
+      console.error("[wzSubmit] confidence mapping failed", { wzConfidence });
+      setToast("Internal error: unrecognized confidence selection.");
+      return;
+    }
     const sexMap = { m: "male", f: "female", u: "unsure" };
     const ageMap = { teens: "teens", "20s": "20s", "30s": "30s", "40s": "40s", "50s": "50s", "60p": "60+", u: "unsure" };
     const buildMap = { slim: "slim", avg: "average", heavy: "heavy", u: "unsure" };
     const timeMap = { now: "just_now", hour: "within_hour", today: "earlier_today", yest: "yesterday", week: "earlier_this_week", custom: "other" };
-    const basisMap = { direct: "saw_self", hearsay: "someone_told_me", doc: "read_written" };
     const { data, error } = await supabase.rpc("submit_report", {
       p_source_pseudonym: sessionPseudonym,
       p_category: "person",
       p_sub_category: "new_person_seen",
-      p_person_sex: sexMap[wzSex] || null,
-      p_person_age: ageMap[wzAge] || null,
-      p_person_build: buildMap[wzBuild] || null,
+      p_person_sex: sexMap[wzSex],
+      p_person_age: ageMap[wzAge],
+      p_person_build: buildMap[wzBuild],
       p_person_features: wzFeatures || null,
       p_mgrs: "14R PU 64829 53117",
       p_named_place: wzNamedPlace || null,
-      p_when_observed: timeMap[wzTime] || null,
+      p_when_observed: timeMap[wzTime],
       p_activity: wzActivity || null,
       p_has_photo: !!wzPhotoAttached,
       p_has_voice: !!wzVoiceAttached,
-      p_basis_of_knowledge: basisMap[wzBasis] || null,
+      p_basis_of_knowledge: mappedBasis,
       p_confidence: wzConfidence,
     });
     console.log("[submit_report] data:", data);

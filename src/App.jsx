@@ -1599,8 +1599,10 @@ export default function ArsPocIntegrated() {
     setRoute({ screen: last, history: route.history.slice(0, -1), params: {} });
   };
 
-  // Auth handlers (POC demo — accepts any non-empty callsign + passcode)
-  const authCanLogin = authCallsign.trim().length > 0;
+  // POC demo: button enables when both callsign and passcode are non-empty.
+  // Passcode is UI-required but not validated at the RPC layer for v0.2.
+  // Production will use PIV/CAC + unit SSO per ICP §8.
+  const authCanLogin = authCallsign.trim().length > 0 && authPasscode.trim().length > 0;
   const doDemoLogin = async () => {
     const pseudo = authCallsign.trim().toUpperCase();
     if (!pseudo) return;

@@ -1494,7 +1494,6 @@ export default function ArsPocIntegrated() {
   const [tab, setTab] = useState("active");
   const [selectedTask, setSelectedTask] = useState(null);
   const [concernOpen, setConcernOpen] = useState(false);
-  const [vetted, setVetted] = useState(false);
   const [activeSubCat, setActiveSubCat] = useState(null);
   const [gatedOpen, setGatedOpen] = useState(false);
   const [qcMediaType, setQcMediaType] = useState(null);
@@ -2289,7 +2288,7 @@ export default function ArsPocIntegrated() {
               </button>
               <div className="grid grid-cols-2 gap-2 mt-3">
                 {CATEGORIES.map((cat) => (
-                  <CategoryCard key={cat.key} cat={cat} lang={lang} vetted={vetted}
+                  <CategoryCard key={cat.key} cat={cat} lang={lang}
                     hasTask={cat.key === "person"}
                     prePop={route.params.preSelectedCategory === cat.key}
                     onTap={handleCardTap} />
